@@ -1,4 +1,4 @@
-# FinancialFraudDetection# Financial Fraud Detection Pipeline
+# Financial Fraud Detection Pipeline
 
 An end-to-end machine learning pipeline for detecting fraudulent financial transactions at scale.
 
@@ -72,6 +72,9 @@ Automated Reporting      ← JSON metrics + Precision-Recall curves + Confusion 
 FinancialFraudDetection/
 ├── fraud_detection.py      # Main pipeline
 ├── requirements.txt        # Dependencies
+├── data/                   # Raw and processed datasets
+├── models/                 # Saved model artifacts
+├── notebooks/              # Exploratory analysis notebooks
 ├── outputs/
 │   ├── pipeline.log        # Structured run logs
 │   ├── performance_report.json  # Model metrics
