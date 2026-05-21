@@ -182,17 +182,17 @@ def train_and_evaluate(df: pd.DataFrame, feature_cols: list) -> dict:
 
     models = {
         "RandomForest": RandomForestClassifier(
-            n_estimators=200,
-            max_depth=15,
+            n_estimators=100,
+            max_depth=10,
             min_samples_leaf=10,
             class_weight="balanced",
             random_state=SEED,
-            n_jobs=-1
+            n_jobs=1
         ),
         "XGBoost": xgb.XGBClassifier(
-            n_estimators=200,
+            n_estimators=100,
             max_depth=6,
-            learning_rate=0.05,
+            learning_rate=0.1,
             scale_pos_weight=int((y == 0).sum() / (y == 1).sum()),
             random_state=SEED,
             eval_metric="auc",
@@ -201,11 +201,11 @@ def train_and_evaluate(df: pd.DataFrame, feature_cols: list) -> dict:
     }
 
     results = {}
-    cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=SEED)
+    cv = StratifiedKFold(n_splits=3, shuffle=True, random_state=SEED)
 
     for name, model in models.items():
         log.info(f"Training {name}...")
-        cv_scores = cross_val_score(model, X_bal, y_bal, cv=cv, scoring="roc_auc", n_jobs=-1)
+        cv_scores = cross_val_score(model, X_bal, y_bal, cv=cv, scoring="roc_auc", n_jobs=1)
         model.fit(X_bal, y_bal)
         y_proba = model.predict_proba(X_scaled)[:, 1]
         auc = roc_auc_score(y, y_proba)
@@ -291,6 +291,14 @@ def generate_report(results: dict, output_dir: Path) -> dict:
     plt.savefig(output_dir / "model_performance.png", dpi=150, bbox_inches="tight")
     plt.close()
 
+    class _NumpyEncoder(json.JSONEncoder):
+        def default(self, obj):
+            if isinstance(obj, (np.integer, np.floating)):
+                return float(obj)
+            if isinstance(obj, np.ndarray):
+                return obj.tolist()
+            return super().default(obj)
+
     report_path = output_dir / "performance_report.json"
     with open(report_path, "w") as f:
         json.dump({
@@ -298,7 +306,7 @@ def generate_report(results: dict, output_dir: Path) -> dict:
             "dataset": "ULB Credit Card Fraud Detection",
             "seed": SEED,
             "models": summary
-        }, f, indent=2)
+        }, f, indent=2, cls=_NumpyEncoder)
 
     log.info(f"Report saved: {report_path}")
     log.info(f"Visualization saved: {output_dir / 'model_performance.png'}")
